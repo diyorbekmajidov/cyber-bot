@@ -18,10 +18,15 @@ for i in range(0, len(city), 2):
 
 
 keyboard_test = [
-    [InlineKeyboardButton('Shablon test', callback_data='shablon')],[InlineKeyboardButton('Imtihon ishlash', callback_data='test')]
+    [InlineKeyboardButton('Shablon test', callback_data='shablon'),InlineKeyboardButton('Imtihon ishlash', callback_data='test')]
 ]
 test_markup = InlineKeyboardMarkup(keyboard_test)
 
+finish_keyboard = [
+    [InlineKeyboardButton('Qayta urinish ↩️', callback_data='retry'), 
+     InlineKeyboardButton('Asosiy menuga ➡️', callback_data='main_menu')]
+]
+finish_markup = InlineKeyboardMarkup(finish_keyboard)
 def distric_keyboard(distric_callback):
     rows = []
     row = []
