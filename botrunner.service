@@ -4,6 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
+[Service]
 ExecStart=/usr/bin/python3 /home/age_2023/Saidazimxon/cyber-bot/main.py
 WorkingDirectory=/home/age_2023/Saidazimxon/cyber-bot
 StandardOutput=journal
