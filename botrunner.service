@@ -1,16 +1,14 @@
 [Unit]
-Description=TranslatorBot
-After=syslog.target
+Description=CyberBot
 After=network.target
 
 [Service]
-Restart=always
-RestartSec=2s
-MemoryLimit=1G
-User=root
-Group=root
-WorkingDirectory=/root/Bot
-ExecStart=/root/Bot/venv/bin/python3 /root/Bot/main.py
+Type=simple
+ExecStart=/usr/bin/python3 /home/age_2023/Saidazimxon/cyber-bot/main.py
+WorkingDirectory=/home/age_2023/Saidazimxon/cyber-bot
+StandardOutput=journal
+StandardError=journal
+Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
