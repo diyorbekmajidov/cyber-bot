@@ -169,9 +169,17 @@ async def finish_test(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     await query.edit_message_text(message_text, reply_markup=finish_markup)
 
 async def handle_retry(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    url_template = url + 'test_template/'
+    r_template = requests.get(url_template)
+    data_template = r_template.json()
     query = update.callback_query
+
+    context.user_data['question'] = data_template
+    context.user_data['score'] = 0
+    context.user_data['wrong_answer'] = 0
     await query.answer()
     await query.message.reply_text("Qayta urinish boshlandi.")
+    
     # Reset score or restart quiz logic here if needed
 
 async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
