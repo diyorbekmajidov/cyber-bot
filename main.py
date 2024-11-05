@@ -86,6 +86,7 @@ async def ShablonButton(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     
     url_template = url + 'test_template/'
     r_template = requests.get(url_template)
+    print(r_template.status_code, r_template.text)
     data_template = r_template.json()
     
     context.user_data['question'] = data_template
