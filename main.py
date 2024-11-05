@@ -86,8 +86,15 @@ async def ShablonButton(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     
     url_template = url + 'test_template/'
     r_template = requests.get(url_template)
-    print(r_template.status_code, r_template.text)
-    data_template = r_template.json()
+    # print(r_template.status_code, r_template.text)
+    if r_template.status_code == 200:
+        try:
+            data_template = r_template.json()  
+        except json.JSONDecodeError:
+            print("JSON ma'lumotlarini o'qishda xatolik yuz berdi")
+            data_template = None  # Yoki mos ravishda xatolikni boshqaring
+    else:
+        print(f"Xato: {r_template.status_code} kod bilan javob qaytdi") 
     
     context.user_data['question'] = data_template
     context.user_data['score'] = 0
