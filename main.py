@@ -4,10 +4,10 @@ from telegram.ext import CommandHandler, ContextTypes,MessageHandler, Applicatio
 from keyboards.reply import phone_markup
 from keyboards.inline import keyboard_city, distric_keyboard, test_markup,finish_markup
 from dotenv import load_dotenv
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
 load_dotenv()
 ASK_NAME, ASK_PHONE, ASK_CITY, ASK_DISTRIC = range(4)
-url = os.getenv('API_URL')
+url = 'http://127.0.0.1:8000/api/v1/'
 
 with open('data.json', 'r') as file:
     data = json.load(file)
@@ -38,8 +38,16 @@ async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def ask_phone(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data['phone_number'] = update.message.contact.phone_number
     context.user_data['telegram_id'] = update.message.from_user.id
+
+    await update.message.reply_text(
+        "Yashash manzilingiz\n(Hududingizni tanlang)",
+        reply_markup=ReplyKeyboardRemove() 
+    )
     
-    await update.message.reply_text("Yashash manzilingiz\n(Hududingizni tanlang)", reply_markup=keyboard_city)
+    await update.message.reply_text(
+        "Iltimos, shahringizni tanlang:",
+        reply_markup=keyboard_city  
+    )
     return ASK_CITY
 
 async def ask_city(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
@@ -78,41 +86,71 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 
-
-
 async def ShablonButton(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
-    query.answer()
-    
-    url_template = url + 'test_template/'
-    r_template = requests.get(url_template)
-    # print(r_template.status_code, r_template.text)
-    if r_template.status_code == 200:
-        try:
-            data_template = r_template.json()  
-        except json.JSONDecodeError:
-            print("JSON ma'lumotlarini o'qishda xatolik yuz berdi")
-            data_template = None  # Yoki mos ravishda xatolikni boshqaring
-    else:
-        print(f"Xato: {r_template.status_code} kod bilan javob qaytdi") 
-    
-    context.user_data['question'] = data_template
-    context.user_data['score'] = 0
-    context.user_data['wrong_answer'] = 0
-    
-    first_question = data_template[0]
-    text = f"{first_question['title']}\n" + "\n".join(
-        [f"F{i+1}. {option['text']}" for i, option in enumerate(first_question['options'])]
-    )
-    
-    keyboard = [
-        [InlineKeyboardButton(f"F{i+1}", callback_data=f"F{i+1}:{i}") for i in range(4)]
-    ]
-    keyboard.append([InlineKeyboardButton('Testni yakunlash 🏁', callback_data='finish')])
-    reply_keyboard = InlineKeyboardMarkup(keyboard)
+    await query.answer()
 
-    if query.data == 'shablon':
+    # Mavzularni olish uchun API so'rovi
+    topic_url = url + 'topic/'
+    response = requests.get(topic_url)
+
+    if response.status_code == 200:
+        try:
+            topics = response.json()  # Mavzular ro'yxati
+            print(topics)
+        except json.JSONDecodeError:
+            await query.edit_message_text("Mavzularni olishda xatolik yuz berdi.")
+            return
+
+        # Inline tugmachalar yaratish
+        keyboard = [
+            [InlineKeyboardButton(topic['title'], callback_data=f"topic:{topic['id']}")]
+            for topic in topics
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        # Foydalanuvchiga mavzularni ko'rsatish
+        await query.edit_message_text("Mavzuni tanlang:", reply_markup=reply_markup)
+    else:
+        await query.edit_message_text("Mavzularni olishda xatolik yuz berdi.")
+
+async def StartTopicTest(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    topic_id = query.data.split(':')[1]  # `topic:<id>` formatidagi callback_data ni parchalash
+    context.user_data['selected_topic'] = topic_id
+
+    # API orqali tanlangan mavzuga oid testni olish
+    test_url = url + f'test_template/?topic_id={topic_id}'
+    response = requests.get(test_url)
+
+    if response.status_code == 200:
+        try:
+            data_template = response.json()  # Savollar ro'yxati
+        except json.JSONDecodeError:
+            await query.edit_message_text("Test ma'lumotlarini olishda xatolik yuz berdi.")
+            return
+
+        # Test savollarini saqlash
+        context.user_data['question'] = data_template
+        context.user_data['score'] = 0
+        context.user_data['wrong_answer'] = 0
+
+        # Birinchi savolni chiqarish
+        first_question = data_template[0]
+        text = f"{first_question['title']}\n" + "\n".join(
+            [f"F{i+1}. {option['text']}" for i, option in enumerate(first_question['options'])]
+        )
+
+        keyboard = [
+            [InlineKeyboardButton(f"F{i+1}", callback_data=f"F{i+1}:{i}") for i in range(4)]
+        ]
+        keyboard.append([InlineKeyboardButton('Testni yakunlash 🏁', callback_data='finish')])
+        reply_keyboard = InlineKeyboardMarkup(keyboard)
+
         await query.edit_message_text(text, reply_markup=reply_keyboard)
+    else:
+        await query.edit_message_text("Testni olishda xatolik yuz berdi.")
+
 
 
 async def NextShablonTest(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -213,8 +251,10 @@ def main():
     # Botni ishga tushirish
     app.add_handler(conv_handler)
     app.add_handler(CallbackQueryHandler(ShablonButton, pattern='^(shablon)$'))
+    app.add_handler(CallbackQueryHandler(StartTopicTest, pattern='^topic:\\d+$'))
     app.add_handler(CallbackQueryHandler(NextShablonTest, pattern='^(F1:0|F2:1|F3:2|F4:3)$'))
     app.add_handler(CallbackQueryHandler(finish_test, pattern='^finish$'))
+
     app.add_handler(CallbackQueryHandler(handle_retry, pattern='^retry$'))
     app.add_handler(CallbackQueryHandler(handle_main_menu, pattern='^main_menu$'))
 

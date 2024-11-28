@@ -1,5 +1,13 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-import json
+import json, os, requests
+url = os.getenv('API_URL')
+
+
+def topic_keyboard():
+    r = requests.get(url+f'topic/')
+    data_topic = r.json()
+    print(r.status_code, r.text)
+    return r.status_code, r.text
 
 with open('data.json', 'r') as file:
     data = json.load(file)
@@ -44,6 +52,8 @@ def distric_keyboard(distric_callback):
         return None
 
     return InlineKeyboardMarkup(rows)
+
+
 
 
 
