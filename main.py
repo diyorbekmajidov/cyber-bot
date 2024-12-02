@@ -236,7 +236,7 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     # Add logic to navigate back to the main menu here
 
 def main():
-    app = Application.builder().token(os.getenv('BOT_TOKEN')).build()
+    app = Application.builder().token('7678731670:AAETFJmEGrX7ZlXTO_kmDK730koP-4GAcxc').build()
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
