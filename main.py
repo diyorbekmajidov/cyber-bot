@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
 load_dotenv()
 ASK_NAME, ASK_PHONE, ASK_CITY, ASK_DISTRIC = range(4)
-url = 'http://127.0.0.1:8000/api/v1/'
+# url = 'http://127.0.0.1:8000/api/v1/'
+url = 'https://kattakurgonst.uz/api/v1/'
 
 with open('data.json', 'r') as file:
     data = json.load(file)
